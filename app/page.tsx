@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 
 interface Product {
   id: string;
@@ -51,6 +52,7 @@ export default function Home() {
   const [postalCode, setPostalCode] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // SA Provinces
@@ -156,6 +158,7 @@ export default function Home() {
         setSelectedProduct(product);
         setProducts([]);
         setSearchQuery('');
+        setShowSearch(false);
       }
     } catch {
       setError('Failed to create deal. Please try again.');
@@ -239,23 +242,61 @@ export default function Home() {
     return `R ${amount.toLocaleString('en-ZA')}`;
   };
 
+  // Landing page view
+  if (!showSearch && !deal) {
+    return (
+      <div
+        className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col"
+        style={{ backgroundImage: 'url(/nyn-bg.png)' }}
+      >
+        {/* Logo */}
+        <div className="absolute top-4 left-4 md:top-8 md:left-8">
+          <Image
+            src="/logo.png"
+            alt="Audico"
+            width={150}
+            height={50}
+            className="h-8 md:h-12 w-auto"
+          />
+        </div>
+
+        {/* Main content - centered */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center">
+            {/* The background already has the search bar design, so we add a clickable overlay */}
+          </div>
+        </div>
+
+        {/* Get Started Button */}
+        <div className="absolute bottom-8 right-8">
+          <button
+            onClick={() => setShowSearch(true)}
+            className="px-8 py-3 border-2 border-cyan-400/50 text-cyan-100 font-semibold rounded hover:bg-cyan-400/10 transition-all uppercase tracking-wider text-sm"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <header className="bg-black/50 backdrop-blur-sm border-b border-red-500/20">
+      <header className="bg-slate-900/80 backdrop-blur-sm border-b border-cyan-500/20">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center font-bold text-white">
-              A
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">AudicoOnline</h1>
-              <p className="text-xs text-red-400">BLACK FRIDAY 2024</p>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Audico"
+              width={120}
+              height={40}
+              className="h-8 w-auto"
+            />
           </div>
           <div className="text-right">
-            <p className="text-red-500 font-semibold text-sm animate-pulse">LIVE DEALS</p>
-            <p className="text-gray-400 text-xs">Cost + 15% Only!</p>
+            <p className="text-cyan-400 font-semibold text-sm">BLACK FRIDAY</p>
+            <p className="text-slate-400 text-xs">TODAY ONLY</p>
           </div>
         </div>
       </header>
@@ -266,13 +307,10 @@ export default function Home() {
         {!deal && (
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Name Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Need</span>
+              Name Your <span className="text-cyan-400">Need</span>
             </h2>
-            <p className="text-gray-400 text-lg mb-2">
-              Tell us what you&apos;re looking for and get an instant Black Friday deal
-            </p>
-            <p className="text-red-400 font-semibold">
-              Our Cost + 15% = Your Price
+            <p className="text-slate-400 text-lg mb-2">
+              AI calculates your best price
             </p>
           </div>
         )}
@@ -286,45 +324,49 @@ export default function Home() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for any audio/visual product..."
-                className="w-full px-6 py-4 text-lg bg-gray-800/80 border-2 border-gray-700 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500 transition-colors"
+                className="w-full px-6 py-4 text-lg bg-slate-800/80 border-2 border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
               />
-              {isSearching && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                {isSearching ? (
+                  <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                )}
+              </div>
             </div>
 
             {/* Search Results */}
             {products.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden z-50 max-h-96 overflow-y-auto">
                 {products.map((product) => (
                   <button
                     key={product.id}
                     onClick={() => createDeal(product)}
                     disabled={isCreatingDeal}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-700/50 transition-colors text-left border-b border-gray-700 last:border-0"
+                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700 last:border-0"
                   >
                     <div className="flex-1">
                       <p className="text-white font-medium">{product.product_name}</p>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-slate-400 text-sm">
                         {product.brand} {product.model && `| ${product.model}`}
                       </p>
                     </div>
                     <div className="text-right ml-4">
                       {product.deal_price ? (
                         <>
-                          <p className="text-red-400 font-bold text-lg">
+                          <p className="text-cyan-400 font-bold text-lg">
                             {formatCurrency(product.deal_price)}
                           </p>
                           {product.selling_price && product.selling_price > product.deal_price && (
-                            <p className="text-gray-500 text-sm line-through">
+                            <p className="text-slate-500 text-sm line-through">
                               {formatCurrency(product.selling_price)}
                             </p>
                           )}
                         </>
                       ) : (
-                        <p className="text-gray-500">Price on request</p>
+                        <p className="text-slate-500">Price on request</p>
                       )}
                     </div>
                   </button>
@@ -343,9 +385,9 @@ export default function Home() {
 
         {/* Deal Card */}
         {deal && (
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-700">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-700">
             {/* Countdown Banner */}
-            <div className="bg-gradient-to-r from-red-600 to-orange-600 px-6 py-3 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-3 flex items-center justify-between">
               <p className="text-white font-semibold">Deal Expires In:</p>
               <div className="flex items-center gap-2">
                 <span className="text-3xl font-bold text-white font-mono">
@@ -358,114 +400,100 @@ export default function Home() {
             {/* Product Info */}
             <div className="p-6 md:p-8">
               <div className="mb-6">
-                <p className="text-gray-400 text-sm mb-1">{deal.product.brand}</p>
+                <p className="text-slate-400 text-sm mb-1">{deal.product.brand}</p>
                 <h3 className="text-2xl font-bold text-white">{deal.product.name}</h3>
                 {deal.product.model && (
-                  <p className="text-gray-500 text-sm">Model: {deal.product.model}</p>
+                  <p className="text-slate-500 text-sm">Model: {deal.product.model}</p>
                 )}
               </div>
 
-              {/* Pricing */}
+              {/* Pricing - simplified, no cost breakdown */}
               <div className="bg-black/30 rounded-2xl p-6 mb-6">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Our Cost</p>
-                    <p className="text-white font-semibold text-lg">
-                      {formatCurrency(deal.cost_price)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Markup</p>
-                    <p className="text-orange-400 font-semibold text-lg">
-                      +{deal.markup_percentage}%
-                    </p>
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-gray-700">
-                  <p className="text-gray-400 text-sm mb-1">Your Black Friday Price</p>
-                  <p className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
+                <div className="text-center">
+                  <p className="text-slate-400 text-sm mb-2">Your Black Friday Price</p>
+                  <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
                     {formatCurrency(deal.offer_price)}
                   </p>
                 </div>
-                <p className="text-green-400 text-sm mt-2">
+                <p className="text-green-400 text-sm mt-4 text-center">
                   {deal.stock_available > 0 ? `${deal.stock_available} in stock` : 'Limited availability'}
                 </p>
               </div>
 
               {/* Customer Info Form */}
               <div className="space-y-4 mb-6">
-                <h4 className="text-white font-semibold border-b border-gray-700 pb-2">Your Details</h4>
+                <h4 className="text-white font-semibold border-b border-slate-700 pb-2">Your Details</h4>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-400 text-sm mb-1">Full Name *</label>
+                    <label className="block text-slate-400 text-sm mb-1">Full Name *</label>
                     <input
                       type="text"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="John Smith"
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-400 text-sm mb-1">Phone Number *</label>
+                    <label className="block text-slate-400 text-sm mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="082 123 4567"
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Email Address *</label>
+                  <label className="block text-slate-400 text-sm mb-1">Email Address *</label>
                   <input
                     type="email"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
 
-                <h4 className="text-white font-semibold border-b border-gray-700 pb-2 pt-4">Delivery Address</h4>
+                <h4 className="text-white font-semibold border-b border-slate-700 pb-2 pt-4">Delivery Address</h4>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Street Address *</label>
+                  <label className="block text-slate-400 text-sm mb-1">Street Address *</label>
                   <input
                     type="text"
                     value={address1}
                     onChange={(e) => setAddress1(e.target.value)}
                     placeholder="123 Main Street"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-1">Apartment, Suite, etc. (optional)</label>
+                  <label className="block text-slate-400 text-sm mb-1">Apartment, Suite, etc. (optional)</label>
                   <input
                     type="text"
                     value={address2}
                     onChange={(e) => setAddress2(e.target.value)}
                     placeholder="Unit 5, Block A"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-400 text-sm mb-1">City *</label>
+                    <label className="block text-slate-400 text-sm mb-1">City *</label>
                     <input
                       type="text"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="Johannesburg"
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-400 text-sm mb-1">Province *</label>
+                    <label className="block text-slate-400 text-sm mb-1">Province *</label>
                     <select
                       value={province}
                       onChange={(e) => setProvince(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-red-500"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white focus:outline-none focus:border-cyan-400"
                     >
                       <option value="">Select Province</option>
                       {provinces.map((p) => (
@@ -475,23 +503,23 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="md:w-1/2">
-                  <label className="block text-gray-400 text-sm mb-1">Postal Code *</label>
+                  <label className="block text-slate-400 text-sm mb-1">Postal Code *</label>
                   <input
                     type="text"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     placeholder="2000"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
-                <p className="text-gray-500 text-xs">* Required fields. Delivery fees will be quoted after order confirmation.</p>
+                <p className="text-slate-500 text-xs">* Required fields. Delivery fees will be quoted after order confirmation.</p>
               </div>
 
               {/* Pay Button */}
               <button
                 onClick={processPayment}
                 disabled={isProcessingPayment || timeLeft === 0 || !isFormValid()}
-                className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-red-500/25"
+                className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-cyan-500/25"
               >
                 {isProcessingPayment ? (
                   <span className="flex items-center justify-center gap-2">
@@ -509,7 +537,7 @@ export default function Home() {
                   setDeal(null);
                   setSelectedProduct(null);
                 }}
-                className="w-full mt-3 py-2 text-gray-500 hover:text-gray-400 text-sm transition-colors"
+                className="w-full mt-3 py-2 text-slate-500 hover:text-slate-400 text-sm transition-colors"
               >
                 Cancel and search again
               </button>
@@ -517,53 +545,29 @@ export default function Home() {
           </div>
         )}
 
-        {/* How It Works */}
+        {/* Back button when in search mode */}
         {!deal && (
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-white text-center mb-8">How It Works</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-gray-800/50 rounded-2xl p-6 text-center">
-                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">1</span>
-                </div>
-                <h4 className="text-white font-semibold mb-2">Search</h4>
-                <p className="text-gray-400 text-sm">
-                  Type the product you&apos;re looking for - any audio or visual equipment
-                </p>
-              </div>
-              <div className="bg-gray-800/50 rounded-2xl p-6 text-center">
-                <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">2</span>
-                </div>
-                <h4 className="text-white font-semibold mb-2">Get Your Price</h4>
-                <p className="text-gray-400 text-sm">
-                  See our actual cost and pay just 15% more - complete transparency
-                </p>
-              </div>
-              <div className="bg-gray-800/50 rounded-2xl p-6 text-center">
-                <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">3</span>
-                </div>
-                <h4 className="text-white font-semibold mb-2">Pay & Collect</h4>
-                <p className="text-gray-400 text-sm">
-                  Secure payment via PayFast - collect from our store or arrange delivery
-                </p>
-              </div>
-            </div>
+          <div className="text-center mt-8">
+            <button
+              onClick={() => setShowSearch(false)}
+              className="text-slate-500 hover:text-slate-400 text-sm transition-colors"
+            >
+              ← Back to home
+            </button>
           </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-black/50 border-t border-gray-800 py-6 mt-16">
+      <footer className="bg-slate-900/50 border-t border-slate-800 py-6 mt-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-gray-500 text-sm">
-            AudicoOnline Black Friday 2024 |
-            <a href="https://www.audicoonline.co.za" className="text-red-400 hover:text-red-300 ml-1">
+          <p className="text-slate-500 text-sm">
+            Audico Black Friday 2025 |
+            <a href="https://www.audicoonline.co.za" className="text-cyan-400 hover:text-cyan-300 ml-1">
               www.audicoonline.co.za
             </a>
           </p>
-          <p className="text-gray-600 text-xs mt-2">
+          <p className="text-slate-600 text-xs mt-2">
             Deals valid while stocks last. Prices exclude delivery.
           </p>
         </div>

@@ -131,18 +131,18 @@ function SuccessContent() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-400">2.</span>
-                    Our team will contact you to arrange collection or delivery
+                    Our team will contact you to arrange delivery
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-400">3.</span>
-                    Questions? Call us at 011 xxx xxxx
+                    Questions? Call us at 011 794 4783
                   </li>
                 </ul>
               </div>
 
               <Link
                 href="/"
-                className="block w-full mt-6 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold text-center rounded-xl hover:from-red-500 hover:to-orange-500 transition-all"
+                className="block w-full mt-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-center rounded-xl hover:from-cyan-500 hover:to-blue-500 transition-all"
               >
                 Find Another Deal
               </Link>
