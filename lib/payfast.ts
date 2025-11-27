@@ -241,14 +241,13 @@ export function buildPaymentData(options: {
 
 /**
  * Generate signature for ITN verification
- * ITN uses the fields in the order PayFast sends them (which is their defined order)
- * NOT alphabetical, but the specific PayFast ITN order
+ * PayFast ITN uses RAW values (no URL encoding) in a specific order
  */
 function generateITNSignature(
   data: Record<string, string>,
   passphrase: string
 ): string {
-  // PayFast ITN field order (from their documentation)
+  // PayFast ITN field order (from their PHP SDK)
   const ITN_FIELD_ORDER = [
     'm_payment_id',
     'pf_payment_id',
@@ -276,17 +275,18 @@ function generateITNSignature(
 
   let pfOutput = '';
 
-  // Build string in ITN field order
+  // Build string in ITN field order - NO URL ENCODING for ITN!
   for (const field of ITN_FIELD_ORDER) {
     const value = data[field];
     if (value !== undefined && value !== '' && value !== null) {
-      pfOutput += `${field}=${phpUrlEncode(String(value).trim())}&`;
+      // Use raw value, not URL encoded
+      pfOutput += `${field}=${String(value).trim()}&`;
     }
   }
 
-  // Add passphrase if set
+  // Add passphrase if set (also raw, not encoded)
   if (passphrase && passphrase.trim() !== '') {
-    pfOutput += `passphrase=${phpUrlEncode(passphrase.trim())}&`;
+    pfOutput += `passphrase=${passphrase.trim()}&`;
   }
 
   // Remove last ampersand
