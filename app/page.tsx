@@ -52,7 +52,12 @@ export default function Home() {
   const [postalCode, setPostalCode] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Shipping threshold
+  const FREE_SHIPPING_THRESHOLD = 1000;
+  const SHIPPING_FEE = 150;
 
   // SA Provinces
   const provinces = [
@@ -157,6 +162,7 @@ export default function Home() {
         setSelectedProduct(product);
         setProducts([]);
         setSearchQuery('');
+        setQuantity(1); // Reset quantity for new deal
       }
     } catch {
       setError('Failed to create deal. Please try again.');
@@ -199,6 +205,8 @@ export default function Home() {
           customerEmail,
           customerPhone,
           customerName,
+          quantity,
+          shipping: getShipping(),
           address: {
             address1,
             address2,
@@ -239,6 +247,11 @@ export default function Home() {
   const formatCurrency = (amount: number) => {
     return `R ${amount.toLocaleString('en-ZA')}`;
   };
+
+  // Calculate order totals
+  const getSubtotal = () => deal ? deal.offer_price * quantity : 0;
+  const getShipping = () => getSubtotal() >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const getTotal = () => getSubtotal() + getShipping();
 
   return (
     <div className="min-h-screen relative">
@@ -376,14 +389,68 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Pricing - simplified, no cost breakdown */}
+              {/* Pricing with Quantity Selector */}
               <div className="bg-black/30 rounded-2xl p-6 mb-6">
-                <div className="text-center">
+                <div className="text-center mb-4">
                   <p className="text-slate-400 text-sm mb-2">Your Black Friday Price</p>
-                  <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+                  <p className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
                     {formatCurrency(deal.offer_price)}
                   </p>
+                  <p className="text-slate-500 text-sm">per unit</p>
                 </div>
+
+                {/* Quantity Selector */}
+                <div className="flex items-center justify-center gap-4 mb-4 py-3 border-t border-b border-slate-700">
+                  <label className="text-slate-400 text-sm">Quantity:</label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold text-xl transition-colors"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max={deal.stock_available}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, Math.min(deal.stock_available, parseInt(e.target.value) || 1)))}
+                      className="w-16 h-10 text-center bg-slate-800 border border-slate-600 rounded-lg text-white font-bold focus:outline-none focus:border-cyan-400"
+                    />
+                    <button
+                      onClick={() => setQuantity(Math.min(deal.stock_available, quantity + 1))}
+                      className="w-10 h-10 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold text-xl transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Subtotal ({quantity} × {formatCurrency(deal.offer_price)})</span>
+                    <span>{formatCurrency(getSubtotal())}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Shipping</span>
+                    {getShipping() === 0 ? (
+                      <span className="text-green-400">FREE</span>
+                    ) : (
+                      <span>{formatCurrency(SHIPPING_FEE)}</span>
+                    )}
+                  </div>
+                  {getSubtotal() < FREE_SHIPPING_THRESHOLD && (
+                    <p className="text-xs text-amber-400 text-center pt-1">
+                      Add {formatCurrency(FREE_SHIPPING_THRESHOLD - getSubtotal())} more for free shipping!
+                    </p>
+                  )}
+                  <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-slate-700">
+                    <span>Total</span>
+                    <span className="text-cyan-400">{formatCurrency(getTotal())}</span>
+                  </div>
+                </div>
+
                 <p className="text-green-400 text-sm mt-4 text-center">
                   {deal.stock_available > 0 ? `${deal.stock_available} in stock` : 'Limited availability'}
                 </p>
@@ -481,7 +548,7 @@ export default function Home() {
                     className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
-                <p className="text-slate-500 text-xs">* Required fields. Delivery fees will be quoted after order confirmation.</p>
+                <p className="text-slate-500 text-xs">* Required fields</p>
               </div>
 
               {/* Pay Button */}
@@ -496,7 +563,7 @@ export default function Home() {
                     Processing...
                   </span>
                 ) : (
-                  `Pay ${formatCurrency(deal.offer_price)} Now`
+                  `Pay ${formatCurrency(getTotal())} Now`
                 )}
               </button>
 
@@ -526,7 +593,7 @@ export default function Home() {
             </a>
           </p>
           <p className="text-slate-600 text-xs mt-2">
-            Deals valid while stocks last. Prices exclude delivery.
+            Deals valid while stocks last. Free delivery on orders over R1,000.
           </p>
         </div>
       </footer>

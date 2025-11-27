@@ -17,6 +17,7 @@ export interface DealData {
   customer_name?: string;
   address?: any;
   quantity: number;
+  shipping?: number;
   cost_price: number;
   markup_percentage: number;
   offer_price: number;

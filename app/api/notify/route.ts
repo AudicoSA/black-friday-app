@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       request.headers.get('x-real-ip') ||
       '127.0.0.1';
 
-    // Calculate expected amount
-    const expectedAmount = deal.offer_price * deal.quantity;
+    // Calculate expected amount (including shipping)
+    const expectedAmount = (deal.offer_price * deal.quantity) + (deal.shipping || 0);
 
     // Verify the ITN
     const verification = await verifyITN(postData, sourceIP, expectedAmount);

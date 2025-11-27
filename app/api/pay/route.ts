@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { token, customerEmail, customerPhone, customerName, address } = body;
+    const { token, customerEmail, customerPhone, customerName, address, quantity: requestedQty, shipping = 0 } = body;
 
     console.log('Pay request received for token:', token);
     console.log('DealsStore has', getDealsCount(), 'deals');
@@ -53,20 +53,25 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Use requested quantity or default to deal quantity
+      const finalQuantity = requestedQty || deal.quantity;
+
       // Check stock
-      if (productStock < deal.quantity) {
+      if (productStock < finalQuantity) {
         return NextResponse.json(
           { error: 'Insufficient stock' },
           { status: 400 }
         );
       }
 
-      // Update deal with customer info and address (file store)
+      // Update deal with customer info, address, quantity and shipping (file store)
       deal = updateDeal(token, {
         customer_email: customerEmail || deal.customer_email,
         customer_phone: customerPhone || deal.customer_phone,
         customer_name: customerName,
         address: address,
+        quantity: finalQuantity,
+        shipping: shipping,
         status: 'accepted',
       }) as DealData;
 
@@ -79,6 +84,8 @@ export async function POST(request: NextRequest) {
           customer_phone: customerPhone || deal.customer_phone,
           customer_name: customerName,
           address: address,
+          quantity: finalQuantity,
+          shipping: shipping,
           status: 'accepted',
         })
         .eq('token', token);
@@ -123,15 +130,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Deal has expired' }, { status: 410 });
       }
 
+      // Use requested quantity or default to deal quantity
+      const finalQuantity = requestedQty || supabaseDeal.quantity;
+
       // Check stock
-      if (supabaseDeal.products.total_stock < supabaseDeal.quantity) {
+      if (supabaseDeal.products.total_stock < finalQuantity) {
         return NextResponse.json(
           { error: 'Insufficient stock' },
           { status: 400 }
         );
       }
 
-      // Update deal with customer info and mark as accepted
+      // Update deal with customer info, quantity, shipping and mark as accepted
       await supabase
         .from('dynamic_deals')
         .update({
@@ -139,6 +149,8 @@ export async function POST(request: NextRequest) {
           customer_phone: customerPhone || supabaseDeal.customer_phone,
           customer_name: customerName,
           address: address,
+          quantity: finalQuantity,
+          shipping: shipping,
           status: 'accepted',
         })
         .eq('token', token);
@@ -150,7 +162,8 @@ export async function POST(request: NextRequest) {
         product: supabaseDeal.products,
         customer_email: customerEmail,
         customer_phone: customerPhone,
-        quantity: supabaseDeal.quantity,
+        quantity: finalQuantity,
+        shipping: shipping,
         cost_price: supabaseDeal.cost_price,
         markup_percentage: supabaseDeal.markup_percentage,
         offer_price: supabaseDeal.offer_price,
@@ -165,9 +178,14 @@ export async function POST(request: NextRequest) {
     console.log('Using app URL:', appUrl);
     const itemName = `Black Friday Deal - ${productName}`.substring(0, 100);
 
+    // Calculate total amount including shipping
+    const subtotal = deal.offer_price * deal.quantity;
+    const totalAmount = subtotal + (deal.shipping || 0);
+    console.log(`Payment: ${deal.quantity} x R${deal.offer_price} = R${subtotal} + R${deal.shipping || 0} shipping = R${totalAmount}`);
+
     const paymentData = buildPaymentData({
       token: deal.token,
-      amount: deal.offer_price * deal.quantity,
+      amount: totalAmount,
       itemName,
       productId: deal.product_id,
       customerEmail,
