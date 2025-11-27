@@ -196,13 +196,16 @@ export async function POST(request: NextRequest) {
       notifyUrl: `${appUrl}/api/notify`,
     });
 
-    // Generate the redirect form HTML
-    const formHtml = generatePaymentForm(paymentData);
+    // Return JSON with payment data for client-side form submission
+    // This allows the client to target _top to break out of iframe
+    const payfastUrl = PAYFAST_CONFIG.sandbox
+      ? 'https://sandbox.payfast.co.za/eng/process'
+      : 'https://www.payfast.co.za/eng/process';
 
-    return new NextResponse(formHtml, {
-      headers: {
-        'Content-Type': 'text/html',
-      },
+    return NextResponse.json({
+      success: true,
+      payfastUrl,
+      paymentData,
     });
   } catch (error) {
     console.error('Payment initiation error:', error);

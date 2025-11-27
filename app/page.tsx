@@ -217,35 +217,34 @@ export default function Home() {
         }),
       });
 
-      if (response.headers.get('content-type')?.includes('text/html')) {
-        // PayFast redirect form
-        const html = await response.text();
+      const data = await response.json();
 
-        // Check if we're inside an iframe
-        const isInIframe = window.self !== window.top;
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
 
-        if (isInIframe) {
-          // Open PayFast in a new window/tab to avoid X-Frame-Options blocking
-          const paymentWindow = window.open('about:blank', '_blank', 'width=800,height=700,scrollbars=yes,resizable=yes');
-          if (paymentWindow) {
-            paymentWindow.document.open();
-            paymentWindow.document.write(html);
-            paymentWindow.document.close();
-          } else {
-            // Popup blocked - try to break out of iframe
-            window.top?.location.assign('data:text/html,' + encodeURIComponent(html));
+      if (data.success && data.payfastUrl && data.paymentData) {
+        // Create a form dynamically and submit it
+        // Target _top to break out of iframe if embedded
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.payfastUrl;
+        form.target = '_top'; // This breaks out of iframe
+
+        // Add all payment data as hidden fields
+        for (const [key, value] of Object.entries(data.paymentData)) {
+          if (value !== undefined && value !== null) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = String(value);
+            form.appendChild(input);
           }
-        } else {
-          // Not in iframe - inject and submit normally
-          document.open();
-          document.write(html);
-          document.close();
         }
-      } else {
-        const data = await response.json();
-        if (data.error) {
-          setError(data.error);
-        }
+
+        document.body.appendChild(form);
+        form.submit();
       }
     } catch {
       setError('Payment initiation failed. Please try again.');
