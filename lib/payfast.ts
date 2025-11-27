@@ -307,10 +307,9 @@ export async function verifyITN(
   sourceIP: string,
   expectedAmount: number
 ): Promise<{ valid: boolean; error?: string }> {
-  // 1. Check source IP (skip in sandbox mode for local testing)
-  if (!PAYFAST_CONFIG.sandbox && !isValidPayFastIP(sourceIP)) {
-    return { valid: false, error: `Invalid source IP: ${sourceIP}` };
-  }
+  // IP validation disabled - PayFast uses too many dynamic IPs (AWS, etc.)
+  // Security is still enforced via signature check + server validation callback
+  console.log('ITN from IP:', sourceIP);
 
   // 2. Verify signature
   const receivedSignature = postData.signature;
