@@ -218,11 +218,29 @@ export default function Home() {
       });
 
       if (response.headers.get('content-type')?.includes('text/html')) {
-        // PayFast redirect form - inject and submit
+        // PayFast redirect form
         const html = await response.text();
-        document.open();
-        document.write(html);
-        document.close();
+
+        // Check if we're inside an iframe
+        const isInIframe = window.self !== window.top;
+
+        if (isInIframe) {
+          // Open PayFast in a new window/tab to avoid X-Frame-Options blocking
+          const paymentWindow = window.open('about:blank', '_blank', 'width=800,height=700,scrollbars=yes,resizable=yes');
+          if (paymentWindow) {
+            paymentWindow.document.open();
+            paymentWindow.document.write(html);
+            paymentWindow.document.close();
+          } else {
+            // Popup blocked - try to break out of iframe
+            window.top?.location.assign('data:text/html,' + encodeURIComponent(html));
+          }
+        } else {
+          // Not in iframe - inject and submit normally
+          document.open();
+          document.write(html);
+          document.close();
+        }
       } else {
         const data = await response.json();
         if (data.error) {
