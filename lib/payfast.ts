@@ -58,6 +58,8 @@ export function isValidPayFastIP(ip: string): boolean {
   if (PAYFAST_IPS.includes(ip)) return true;
   // PayFast 102.216.36.x range
   if (ip.startsWith('102.216.36.')) return true;
+  // PayFast AWS IPs (13.245.x.x range - Africa Cape Town region)
+  if (ip.startsWith('13.245.')) return true;
   return false;
 }
 
