@@ -1,8 +1,5 @@
-import fs from 'fs';
-import path from 'path';
-
-// File-based store for deals - persists across workers and hot reloads
-const DEALS_FILE = path.join(process.cwd(), '.deals-store.json');
+// In-memory store for deals - used as a cache, Supabase is the source of truth
+// Note: On Vercel, file system is read-only, so we can only use in-memory cache
 
 export interface DealData {
   token: string;
@@ -25,70 +22,42 @@ export interface DealData {
   offer_price: number;
   expiry: string;
   status: string;
+  opencart_order_id?: number;
 }
 
-function readDeals(): Map<string, DealData> {
-  try {
-    if (fs.existsSync(DEALS_FILE)) {
-      const data = fs.readFileSync(DEALS_FILE, 'utf-8');
-      const parsed = JSON.parse(data);
-      return new Map(Object.entries(parsed));
-    }
-  } catch (error) {
-    console.error('Error reading deals store:', error);
-  }
-  return new Map();
-}
-
-function writeDeals(deals: Map<string, DealData>): void {
-  try {
-    const data = Object.fromEntries(deals);
-    fs.writeFileSync(DEALS_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Error writing deals store:', error);
-  }
-}
+// In-memory cache (will be lost on cold starts, but Supabase is the source of truth)
+const dealsCache = new Map<string, DealData>();
 
 export function getDeal(token: string): DealData | undefined {
-  const deals = readDeals();
-  return deals.get(token);
+  return dealsCache.get(token);
 }
 
 export function setDeal(token: string, deal: DealData): void {
-  const deals = readDeals();
-  deals.set(token, deal);
-  writeDeals(deals);
+  dealsCache.set(token, deal);
 }
 
 export function updateDeal(token: string, updates: Partial<DealData>): DealData | undefined {
-  const deals = readDeals();
-  const existing = deals.get(token);
+  const existing = dealsCache.get(token);
   if (existing) {
     const updated = { ...existing, ...updates };
-    deals.set(token, updated);
-    writeDeals(deals);
+    dealsCache.set(token, updated);
     return updated;
   }
   return undefined;
 }
 
 export function deleteDeal(token: string): boolean {
-  const deals = readDeals();
-  const deleted = deals.delete(token);
-  if (deleted) {
-    writeDeals(deals);
-  }
-  return deleted;
+  return dealsCache.delete(token);
 }
 
 export function getAllDeals(): Map<string, DealData> {
-  return readDeals();
+  return dealsCache;
 }
 
 export function getDealsCount(): number {
-  return readDeals().size;
+  return dealsCache.size;
 }
 
 export function getDealsKeys(): string[] {
-  return Array.from(readDeals().keys());
+  return Array.from(dealsCache.keys());
 }
