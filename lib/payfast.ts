@@ -48,22 +48,18 @@ export const PAYFAST_IPS = [
   '41.74.179.193',
   '41.74.179.194',
   '41.74.179.195',
-  // Additional production IPs (newer)
-  '102.216.36.0',
-  '102.216.36.1',
-  '102.216.36.2',
-  '102.216.36.3',
-  '102.216.36.4',
-  '102.216.36.5',
-  '102.216.36.6',
-  '102.216.36.7',
-  '102.216.36.8',
-  '102.216.36.9',
-  '102.216.36.10',
   // Sandbox IPs
   '197.97.145.35',
   '197.97.145.36',
 ];
+
+// Check if IP is valid PayFast IP (includes dynamic ranges)
+export function isValidPayFastIP(ip: string): boolean {
+  if (PAYFAST_IPS.includes(ip)) return true;
+  // PayFast 102.216.36.x range
+  if (ip.startsWith('102.216.36.')) return true;
+  return false;
+}
 
 export interface PayFastPaymentData {
   [key: string]: string | number | undefined;
@@ -310,7 +306,7 @@ export async function verifyITN(
   expectedAmount: number
 ): Promise<{ valid: boolean; error?: string }> {
   // 1. Check source IP (skip in sandbox mode for local testing)
-  if (!PAYFAST_CONFIG.sandbox && !PAYFAST_IPS.includes(sourceIP)) {
+  if (!PAYFAST_CONFIG.sandbox && !isValidPayFastIP(sourceIP)) {
     return { valid: false, error: `Invalid source IP: ${sourceIP}` };
   }
 
