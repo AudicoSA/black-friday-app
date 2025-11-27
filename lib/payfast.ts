@@ -37,7 +37,9 @@ export const PAYFAST_URLS = {
 };
 
 // PayFast valid IP addresses for ITN verification
+// Updated list from PayFast documentation
 export const PAYFAST_IPS = [
+  // Production IPs
   '197.97.145.144',
   '197.97.145.145',
   '197.97.145.146',
@@ -46,6 +48,18 @@ export const PAYFAST_IPS = [
   '41.74.179.193',
   '41.74.179.194',
   '41.74.179.195',
+  // Additional production IPs (newer)
+  '102.216.36.0',
+  '102.216.36.1',
+  '102.216.36.2',
+  '102.216.36.3',
+  '102.216.36.4',
+  '102.216.36.5',
+  '102.216.36.6',
+  '102.216.36.7',
+  '102.216.36.8',
+  '102.216.36.9',
+  '102.216.36.10',
   // Sandbox IPs
   '197.97.145.35',
   '197.97.145.36',
