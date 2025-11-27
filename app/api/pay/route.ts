@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Update deal with customer info and address
+      // Update deal with customer info and address (file store)
       deal = updateDeal(token, {
         customer_email: customerEmail || deal.customer_email,
         customer_phone: customerPhone || deal.customer_phone,
@@ -69,6 +69,19 @@ export async function POST(request: NextRequest) {
         address: address,
         status: 'accepted',
       }) as DealData;
+
+      // Also update Supabase so ITN can read it (file store doesn't persist on Vercel)
+      const supabase = createServerSupabase();
+      await supabase
+        .from('dynamic_deals')
+        .update({
+          customer_email: customerEmail || deal.customer_email,
+          customer_phone: customerPhone || deal.customer_phone,
+          customer_name: customerName,
+          address: address,
+          status: 'accepted',
+        })
+        .eq('token', token);
     } else {
       // Fallback to Supabase
       const supabase = createServerSupabase();
@@ -124,6 +137,8 @@ export async function POST(request: NextRequest) {
         .update({
           customer_email: customerEmail || supabaseDeal.customer_email,
           customer_phone: customerPhone || supabaseDeal.customer_phone,
+          customer_name: customerName,
+          address: address,
           status: 'accepted',
         })
         .eq('token', token);
