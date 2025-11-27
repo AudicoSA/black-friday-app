@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><title>PayFast Test 5</title></head>
+<body>
+  <h1>Strategy 5: PHP + UPPER + passphrase</h1>
+  <p>Signature: <code>ef02d08560417d92654a9b41cdbb437b</code></p>
+  <p>String sample: <code>merchant_id=10000100&merchant_key=46f0cd694581a&return_url=http%3A%2F%2Flocalhost%3A3000%2Fsuccess&c...</code></p>
+  <form action="https://sandbox.payfast.co.za/eng/process" method="post">
+    <input type="hidden" name="merchant_id" value="10000100">
+    <input type="hidden" name="merchant_key" value="46f0cd694581a">
+    <input type="hidden" name="return_url" value="http://localhost:3000/success">
+    <input type="hidden" name="cancel_url" value="http://localhost:3000/cancel">
+    <input type="hidden" name="notify_url" value="http://localhost:3000/api/notify">
+    <input type="hidden" name="name_first" value="Test">
+    <input type="hidden" name="name_last" value="User">
+    <input type="hidden" name="email_address" value="test@test.com">
+    <input type="hidden" name="m_payment_id" value="test-123">
+    <input type="hidden" name="amount" value="100.00">
+    <input type="hidden" name="item_name" value="Test Item">
+    <input type="hidden" name="signature" value="ef02d08560417d92654a9b41cdbb437b">
+    <button type="submit" style="padding: 20px 40px; font-size: 18px; background: #0066cc; color: white; border: none; cursor: pointer;">
+      Pay R100.00
+    </button>
+  </form>
+  <p><a href="test-strategy-6.html">Try next strategy</a></p>
+</body>
+</html>

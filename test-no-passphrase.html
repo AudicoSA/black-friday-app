@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head><title>PayFast Test - No Passphrase</title></head>
+<body>
+  <h1>PayFast Sandbox Test (NO Passphrase)</h1>
+  <p>Click the button to test payment:</p>
+  <form action="https://sandbox.payfast.co.za/eng/process" method="post">
+    <input type="hidden" name="merchant_id" value="10000100">
+    <input type="hidden" name="merchant_key" value="46f0cd694581a">
+    <input type="hidden" name="return_url" value="http://localhost:3000/success">
+    <input type="hidden" name="cancel_url" value="http://localhost:3000/cancel">
+    <input type="hidden" name="notify_url" value="http://localhost:3000/api/notify">
+    <input type="hidden" name="name_first" value="Test">
+    <input type="hidden" name="name_last" value="User">
+    <input type="hidden" name="email_address" value="test@test.com">
+    <input type="hidden" name="m_payment_id" value="test-123">
+    <input type="hidden" name="amount" value="100.00">
+    <input type="hidden" name="item_name" value="Test Item">
+    <input type="hidden" name="signature" value="be2ad91a48b4c7ab2d5b368c8c2d3600">
+    <button type="submit" style="padding: 20px 40px; font-size: 18px; cursor: pointer;">
+      Pay R100.00
+    </button>
+  </form>
+</body>
+</html>
