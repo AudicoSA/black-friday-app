@@ -1,26 +1,26 @@
 import crypto from 'crypto';
 
 // =============================================================================
-// HARDCODED SANDBOX CREDENTIALS FOR TESTING - CHANGE TO ENV VARS FOR PRODUCTION!
+// PayFast Configuration - Uses environment variables
+// Set PAYFAST_SANDBOX=true for sandbox mode, false or omit for production
+// Production passphrase can be empty if your account doesn't use one
 // =============================================================================
-// SANDBOX (testing):
-const USE_SANDBOX = true;
-const SANDBOX_MERCHANT_ID = '10000100';
-const SANDBOX_MERCHANT_KEY = '46f0cd694581a';
-const SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
 
-// PRODUCTION (uncomment and use env vars for production):
-// const PROD_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID || '';
-// const PROD_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || '';
-// const PROD_PASSPHRASE = process.env.PAYFAST_PASSPHRASE || '';
-// =============================================================================
+const USE_SANDBOX = process.env.PAYFAST_SANDBOX === 'true';
 
 export const PAYFAST_CONFIG = {
-  merchantId: USE_SANDBOX ? SANDBOX_MERCHANT_ID : (process.env.PAYFAST_MERCHANT_ID || ''),
-  merchantKey: USE_SANDBOX ? SANDBOX_MERCHANT_KEY : (process.env.PAYFAST_MERCHANT_KEY || ''),
-  passphrase: USE_SANDBOX ? SANDBOX_PASSPHRASE : (process.env.PAYFAST_PASSPHRASE || ''),
+  merchantId: process.env.PAYFAST_MERCHANT_ID || '',
+  merchantKey: process.env.PAYFAST_MERCHANT_KEY || '',
+  passphrase: process.env.PAYFAST_PASSPHRASE || '', // Can be empty for production
   sandbox: USE_SANDBOX,
 };
+
+// Log config on startup (without sensitive data)
+console.log('PayFast Config:', {
+  merchantId: PAYFAST_CONFIG.merchantId,
+  sandbox: PAYFAST_CONFIG.sandbox,
+  hasPassphrase: !!PAYFAST_CONFIG.passphrase,
+});
 
 // PayFast URLs - use getter to evaluate at runtime
 export const PAYFAST_URLS = {
