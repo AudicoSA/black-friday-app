@@ -52,7 +52,6 @@ export default function Home() {
   const [postalCode, setPostalCode] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSearch, setShowSearch] = useState(false);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // SA Provinces
@@ -158,7 +157,6 @@ export default function Home() {
         setSelectedProduct(product);
         setProducts([]);
         setSearchQuery('');
-        setShowSearch(false);
       }
     } catch {
       setError('Failed to create deal. Please try again.');
@@ -242,46 +240,17 @@ export default function Home() {
     return `R ${amount.toLocaleString('en-ZA')}`;
   };
 
-  // Landing page view
-  if (!showSearch && !deal) {
-    return (
-      <div
-        className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col"
-        style={{ backgroundImage: 'url(/nyn-bg.png)' }}
-      >
-        {/* Logo */}
-        <div className="absolute top-4 left-4 md:top-8 md:left-8">
-          <Image
-            src="/logo.png"
-            alt="Audico"
-            width={150}
-            height={50}
-            className="h-8 md:h-12 w-auto"
-          />
-        </div>
-
-        {/* Main content - centered */}
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center">
-            {/* The background already has the search bar design, so we add a clickable overlay */}
-          </div>
-        </div>
-
-        {/* Get Started Button */}
-        <div className="absolute bottom-8 right-8">
-          <button
-            onClick={() => setShowSearch(true)}
-            className="px-8 py-3 border-2 border-cyan-400/50 text-cyan-100 font-semibold rounded hover:bg-cyan-400/10 transition-all uppercase tracking-wider text-sm"
-          >
-            Get Started
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen relative">
+      {/* Background Image with Overlay */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/nyn-bg.png)' }}
+      />
+      <div className="fixed inset-0 bg-slate-900/85" />
+
+      {/* Content */}
+      <div className="relative z-10">
       {/* Header */}
       <header className="bg-slate-900/80 backdrop-blur-sm border-b border-cyan-500/20">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -545,17 +514,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Back button when in search mode */}
-        {!deal && (
-          <div className="text-center mt-8">
-            <button
-              onClick={() => setShowSearch(false)}
-              className="text-slate-500 hover:text-slate-400 text-sm transition-colors"
-            >
-              ← Back to home
-            </button>
-          </div>
-        )}
       </main>
 
       {/* Footer */}
@@ -572,6 +530,7 @@ export default function Home() {
           </p>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
