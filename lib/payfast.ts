@@ -244,6 +244,64 @@ export function buildPaymentData(options: {
 }
 
 /**
+ * Generate signature for ITN verification
+ * ITN uses the fields in the order PayFast sends them (which is their defined order)
+ * NOT alphabetical, but the specific PayFast ITN order
+ */
+function generateITNSignature(
+  data: Record<string, string>,
+  passphrase: string
+): string {
+  // PayFast ITN field order (from their documentation)
+  const ITN_FIELD_ORDER = [
+    'm_payment_id',
+    'pf_payment_id',
+    'payment_status',
+    'item_name',
+    'item_description',
+    'amount_gross',
+    'amount_fee',
+    'amount_net',
+    'custom_str1',
+    'custom_str2',
+    'custom_str3',
+    'custom_str4',
+    'custom_str5',
+    'custom_int1',
+    'custom_int2',
+    'custom_int3',
+    'custom_int4',
+    'custom_int5',
+    'name_first',
+    'name_last',
+    'email_address',
+    'merchant_id',
+  ];
+
+  let pfOutput = '';
+
+  // Build string in ITN field order
+  for (const field of ITN_FIELD_ORDER) {
+    const value = data[field];
+    if (value !== undefined && value !== '' && value !== null) {
+      pfOutput += `${field}=${phpUrlEncode(String(value).trim())}&`;
+    }
+  }
+
+  // Add passphrase if set
+  if (passphrase && passphrase.trim() !== '') {
+    pfOutput += `passphrase=${phpUrlEncode(passphrase.trim())}&`;
+  }
+
+  // Remove last ampersand
+  const getString = pfOutput.slice(0, -1);
+
+  console.log('ITN signature string:', getString);
+
+  return crypto.createHash('md5').update(getString).digest('hex');
+}
+
+/**
  * Verify PayFast ITN (Instant Transaction Notification)
  */
 export async function verifyITN(
@@ -258,9 +316,13 @@ export async function verifyITN(
 
   // 2. Verify signature
   const receivedSignature = postData.signature;
-  delete postData.signature;
+  const dataWithoutSig = { ...postData };
+  delete dataWithoutSig.signature;
 
-  const calculatedSignature = generateSignature(postData, PAYFAST_CONFIG.passphrase);
+  const calculatedSignature = generateITNSignature(dataWithoutSig, PAYFAST_CONFIG.passphrase);
+
+  console.log('Received signature:', receivedSignature);
+  console.log('Calculated signature:', calculatedSignature);
 
   if (receivedSignature !== calculatedSignature) {
     return { valid: false, error: 'Signature mismatch' };
