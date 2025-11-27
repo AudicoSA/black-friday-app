@@ -48,6 +48,15 @@ export async function POST(request: NextRequest) {
       deal = supabaseDeal;
     }
 
+    // Debug: Log deal data to see what we're working with
+    console.log('Deal data from store:', JSON.stringify({
+      token: deal.token,
+      offer_price: deal.offer_price,
+      quantity: deal.quantity,
+      shipping: deal.shipping,
+      status: deal.status,
+    }, null, 2));
+
     // Skip if already processed
     if (deal.status === 'paid') {
       console.log('Deal already paid:', token);
@@ -61,7 +70,11 @@ export async function POST(request: NextRequest) {
       '127.0.0.1';
 
     // Calculate expected amount (including shipping)
-    const expectedAmount = (deal.offer_price * deal.quantity) + (deal.shipping || 0);
+    // Default quantity to 1 if not set, shipping to 0
+    const qty = deal.quantity || 1;
+    const ship = deal.shipping || 0;
+    const expectedAmount = (deal.offer_price * qty) + ship;
+    console.log(`Expected amount calculation: ${deal.offer_price} x ${qty} + ${ship} shipping = ${expectedAmount}`);
 
     // Verify the ITN
     const verification = await verifyITN(postData, sourceIP, expectedAmount);

@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS public.dynamic_deals (
     product_id UUID NOT NULL REFERENCES public.products(id),
     customer_email TEXT,
     customer_phone TEXT,
+    customer_name TEXT,
     quantity INTEGER DEFAULT 1 NOT NULL,
+    shipping NUMERIC(10,2) DEFAULT 0,
     cost_price NUMERIC(10,2) NOT NULL,
     markup_percentage NUMERIC(5,2) DEFAULT 15.00 NOT NULL,
     offer_price NUMERIC(10,2) NOT NULL,
@@ -18,9 +20,18 @@ CREATE TABLE IF NOT EXISTS public.dynamic_deals (
     status TEXT DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'accepted', 'paid', 'expired', 'cancelled')),
     order_id TEXT,
     pf_payment_id TEXT,
+    opencart_order_id INTEGER,
+    address JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Migration for existing tables: Add new columns if they don't exist
+ALTER TABLE public.dynamic_deals
+ADD COLUMN IF NOT EXISTS shipping NUMERIC(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS customer_name TEXT,
+ADD COLUMN IF NOT EXISTS address JSONB,
+ADD COLUMN IF NOT EXISTS opencart_order_id INTEGER;
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_dynamic_deals_token ON public.dynamic_deals(token);
