@@ -145,7 +145,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Build PayFast payment data
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Use APP_URL (server-side) or NEXT_PUBLIC_APP_URL or fallback
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    console.log('Using app URL:', appUrl);
     const itemName = `Black Friday Deal - ${productName}`.substring(0, 100);
 
     const paymentData = buildPaymentData({
