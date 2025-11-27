@@ -151,9 +151,18 @@ export async function createOrder(data: OrderData): Promise<{ success: boolean; 
     ) as any;
     const currency = currencyRows[0] || { code: 'ZAR', value: 1 };
 
-    // Insert order
+    // Get max order_id to avoid collisions (start Black Friday orders at 900000+)
+    const [maxOrderRows] = await conn.execute(
+      `SELECT COALESCE(MAX(order_id), 0) as max_id FROM ${TABLE_PREFIX}order`
+    ) as any;
+    const currentMaxId = maxOrderRows[0]?.max_id || 0;
+    const bfMinOrderId = 900000;
+    const nextOrderId = Math.max(currentMaxId + 1, bfMinOrderId);
+
+    // Insert order with explicit order_id to use BF numbering range
     const [orderResult] = await conn.execute(
       `INSERT INTO ${TABLE_PREFIX}order SET
+        order_id = ?,
         invoice_prefix = 'BF-',
         store_id = 0,
         store_name = ?,
@@ -199,6 +208,7 @@ export async function createOrder(data: OrderData): Promise<{ success: boolean; 
         date_added = ?,
         date_modified = ?`,
       [
+        nextOrderId,
         store.name,
         store.url,
         data.customer.firstname,
@@ -237,7 +247,7 @@ export async function createOrder(data: OrderData): Promise<{ success: boolean; 
       ]
     ) as any;
 
-    const orderId = orderResult.insertId;
+    const orderId = nextOrderId;
 
     // Insert order product
     await conn.execute(
