@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { verifyITN } from '@/lib/payfast';
 import { getOpenCartClient, buildOrderPayload } from '@/lib/opencart';
-import { dealsStore } from '../deal/route';
+import { getDeal, updateDeal } from '@/lib/deals-store';
 
 export async function POST(request: NextRequest) {
   console.log('PayFast ITN received');
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Invalid ITN: No payment ID', { status: 400 });
     }
 
-    // First check in-memory store
-    let deal = dealsStore.get(token) as any;
+    // First check file-based store
+    let deal = getDeal(token) as any;
     const supabase = createServerSupabase();
 
     if (!deal) {
@@ -178,11 +178,9 @@ export async function POST(request: NextRequest) {
           console.log(`OpenCart order created successfully: Order ID ${orderResult.order_id}`);
 
           // Store the OpenCart order ID
-          if (dealsStore.has(token)) {
-            (dealsStore.get(token) as any).opencart_order_id = orderResult.order_id;
-          }
+          updateDeal(token, { opencart_order_id: orderResult.order_id } as any);
 
-          // Also update Supabase if the table exists
+          // Also update Supabase
           await supabase
             .from('dynamic_deals')
             .update({ opencart_order_id: orderResult.order_id })
