@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { verifyITN } from '@/lib/payfast';
-import { getOpenCartClient, buildOrderPayload } from '@/lib/opencart';
+import { findProductBySku, createOrder, getZoneInfo } from '@/lib/opencart-db';
 import { getDeal, updateDeal } from '@/lib/deals-store';
 
 export async function POST(request: NextRequest) {
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         console.log(`Stock reduced for product ${deal.product_id}: ${product.total_stock} -> ${newStock}`);
       }
 
-      // Create order in OpenCart
+      // Create order in OpenCart via direct database
       try {
         // Get customer details from deal
         const customerName = deal.customer_name || 'Black Friday Customer';
@@ -133,49 +133,61 @@ export async function POST(request: NextRequest) {
           postalCode: '2000',
         };
 
-        // Find OpenCart product_id by SKU
-        const opencart = getOpenCartClient();
-        let opencartProductId = 0;
-
+        // Find OpenCart product by SKU using direct DB
+        let opencartProduct = null;
         if (product?.sku) {
-          const foundProduct = await opencart.findProductBySku(product.sku);
-          if (foundProduct) {
-            opencartProductId = foundProduct.product_id;
-            console.log(`Found OpenCart product_id ${opencartProductId} for SKU ${product.sku}`);
+          opencartProduct = await findProductBySku(product.sku);
+          if (opencartProduct) {
+            console.log(`Found OpenCart product_id ${opencartProduct.product_id} for SKU ${product.sku}`);
           }
         }
 
-        if (!opencartProductId) {
-          console.warn(`Could not find OpenCart product for SKU ${product?.sku}. Using placeholder ID 0.`);
-          // Note: This will likely fail in OpenCart, but we log it for debugging
+        if (!opencartProduct) {
+          console.warn(`Could not find OpenCart product for SKU ${product?.sku}. Order will be created with product_id 0.`);
         }
 
-        // Build the order payload
-        const orderPayload = buildOrderPayload({
-          productId: opencartProductId,
-          quantity: deal.quantity,
+        // Get zone info from province
+        const zoneInfo = getZoneInfo(address.province || 'Gauteng');
+
+        // Create order directly in OpenCart database
+        const orderResult = await createOrder({
           customer: {
-            firstName,
-            lastName,
+            firstname: firstName,
+            lastname: lastName,
             email: deal.customer_email || 'blackfriday@audicoonline.co.za',
-            phone: deal.customer_phone || '',
+            telephone: deal.customer_phone || '',
           },
           address: {
             address1: address.address1,
-            address2: address.address2,
+            address2: address.address2 || '',
             city: address.city,
-            province: address.province,
-            postalCode: address.postalCode,
+            postcode: address.postalCode,
+            zone_id: zoneInfo.zone_id,
+            zone: zoneInfo.zone,
+          },
+          product: {
+            product_id: opencartProduct?.product_id || 0,
+            name: opencartProduct?.name || product?.product_name || 'Black Friday Deal',
+            model: opencartProduct?.model || '',
+            sku: product?.sku || '',
+            quantity: deal.quantity,
+            price: deal.offer_price,
+            total: deal.offer_price * deal.quantity,
+          },
+          payment: {
+            method: 'PayFast',
+            code: 'payfast',
+          },
+          shipping: {
+            method: 'Store Pickup - Black Friday Deal',
+            code: 'pickup.pickup',
           },
           comment: `Black Friday Deal - PayFast ID: ${pfPaymentId} - Product: ${product?.product_name || 'Unknown'} - Price: R${deal.offer_price}`,
+          total: deal.offer_price * deal.quantity,
         });
 
-        console.log('Creating OpenCart order:', JSON.stringify(orderPayload, null, 2));
-
-        const orderResult = await opencart.createOrder(orderPayload);
-
         if (orderResult.success) {
-          console.log(`OpenCart order created successfully: Order ID ${orderResult.order_id}`);
+          console.log(`OpenCart order created successfully via DB: Order ID ${orderResult.order_id}`);
 
           // Store the OpenCart order ID
           updateDeal(token, { opencart_order_id: orderResult.order_id } as any);
